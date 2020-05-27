@@ -1,63 +1,57 @@
 <template>
   <div class="left-panel">
-   
-    <div class="login-div" v-if="!isAuthenticated">
-      <div class="login-box">
-        <input id="email-input" ref="email-input" class="input" type="text" placeholder="email" required="">
-        <input id="password-input" ref="password-input" class="input" type="password" placeholder="password" required="">
-        <button class="button" @click="login">Login</button>
-         <div>
-        <a>Not a user?</a>
-        <a href='/register'>Register</a>
-        </div>
-      </div>
-    </div>
-    <div class="user-menu" v-else>
+    <div class="user-menu" v-if="isAuthenticated && !isAuthenticating">
        <button class="menu-button" @click="navigateToAllAuctions">All auctions</button>
       <button class="menu-button" @click="navigateToMyAuction">My auctions</button>
       <button class="menu-button" @click="navigateToMyHistory">My History</button>
-      <button class="menu-button" @click="logout">Logout</button>
-     
+      <button class="menu-button" @click="navigateToCreateAuction">Create Auction</button>
     </div>
-
   </div>
 </template>
 <script>
 import axios from '@/../node_modules/axios/dist/axios.min.js'
 
 export default {
-    name: 'LeftPanel',
-    props: {
-      isLoading: {
-        type: Boolean,
-        default: true
-      }
-    },
+  name: 'LeftPanel',
+
   data () {
     return {
-      isAuthenticated: {
-        type: Boolean,
-        default: false
-      }
+      isAuthenticated: false,
+      isAuthenticating: true,
+      usernameError: false,
+      passwordError: false,
+      loginError: false
     }
   },
+
   beforeCreate() {
     axios.get('/user-status')
       .then((resp) => {
         this.isAuthenticated = resp.data["isAuthenticated"]
+        this.isAuthenticating = false;
       })
   },
   
   methods: {
     login () {
-      var userCredentials = {
-        "username": this.$refs["email-input"].value,
+      if(this.$refs["username-input"].value.length == 0) { this.usernameError = true }
+      else { this.usernameError = false }
+
+      if(this.$refs["username-input"].value.length == 0) { this.passwordError = true }
+      else { this. passwordError = false }
+
+      if(!this.usernameError || ! this.passwordError) {
+        var userCredentials = {
+        "username": this.$refs["username-input"].value,
         "password": this.$refs["password-input"].value
+        }
+        axios.post('/login', userCredentials)
+        .then(() => {
+          location.reload()
+        })
+        this.loginError = true
       }
-      axios.post('/login', userCredentials)
-          .then(() => {
-              location.reload();
-          })
+      
     },
     logout () {
       axios.get("/logout")
@@ -69,11 +63,13 @@ export default {
       window.location.href = "/"
     },
     navigateToMyAuction() {
-      // Simulate a mouse click:
         window.location.href = "/myauctions"
     },
     navigateToMyHistory() {
       window.location.href = "/myhistory"
+    },
+    navigateToCreateAuction() {
+      window.location.href = "/create-auction"
     }
   }
 }

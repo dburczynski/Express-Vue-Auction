@@ -1,19 +1,19 @@
 <template>
-    <div class="postList" v-if="isAuthenticated">
-        <div v-for="post in posts" :key="post._id">
-            <div class="post-break">               
+    <div class="auction-list" v-if="isAuthenticated && !isAuthenticating">
+        <div v-for="auction in auctions" :key="auction._id">
+            <div class="auction-break">               
             </div>
-            <div class="post" @click="navigateToPost(post)">
-                <div class="post-name">
-                    <p>{{post.name}}</p>
+            <div class="auction" @click="navigateToAuction(auction)">
+                <div class="auction-name">
+                    <p>{{auction.name}}</p>
                 </div>
-                <div class="post-price">
-                    <p>Price: {{post.price}}</p>
+                <div class="auction-price">
+                    <p>Price: {{auction.price}}</p>
                 </div>
-                <div class="post-status">
-                    <p v-if="post.highest_bidder == username" class="greenStatus">WON</p>
-                    <p v-if="post.highest_bidder != username && username != post.creator" class="redStatus">LOST</p>
-                    <p v-if="post.creator == username" class="greenStatus">SOLD</p>
+                <div class="auction-status">
+                    <p v-if="auction.highest_bidder == username" class="greenStatus">WON</p>
+                    <p v-if="auction.highest_bidder != username && username != auction.creator" class="redStatus">LOST</p>
+                    <p v-if="auction.creator == username" class="greenStatus">SOLD</p>
                 </div>
             </div>
         </div>
@@ -25,49 +25,49 @@ import axios from '@/../node_modules/axios/dist/axios.min.js'
 export default {
     name: 'MyHistory',
     props: {
-        content: {
-            type: String,
-            default: "all"
-        },
-        isAuthenticated: {
-            type: Boolean,
-            default: false
-        },
         username: {
             type: String,
             default: ""
         },
     },
     data () {
-      return {
-        posts: null
+        return {
+            isAuthenticated: false,
+            isAuthenticating: true,
+            auctions: null
         }
     },
     beforeCreate() {
       axios.get('/user-status')
             .then((resp) => {
-                this.isAuthenticated = resp.data["isAuthenticated"]   
-                this.username = resp.data["username"]           
+                this.isAuthenticated = resp.data["isAuthenticated"]    
+                this.isAuthenticating = false
+
+                if(this.isAuthenticated == false) { window.location.href = "/" }   
             });
         axios.get('/auction/myhistory')
         .then((resp) => {
-            this.posts = resp.data
+            this.auctions = resp.data
         })
     },  
     methods: {
-        navigateToPost(post) {
-            window.location.href = "/auction/id:"+post._id;
+        navigateToAuction(auction) {
+            window.location.href = "/auction/id:"+auction._id;
         }
     }
 }
 </script>
 
 <style lang="scss">
-    .postList{
+    .auction-list{
         position: relative;
         width: 800px;
+        height: 95%;
+        overflow-y: scroll;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
-    .post {
+    .auction {
         
         background: #ffffff;
         position: relative;
@@ -77,17 +77,17 @@ export default {
         box-shadow: 0px 1px 5px black;
         cursor: pointer;
     }
-     .post-break {
+    .auction-break {
         height: 40px;
         width: 100%;
     }
-    .post-name {
+    .auction-name {
         font-size: 20px;
         left: 0;
         top: 0;
         margin: 10px;
     }
-    .post-price p{
+    .auction-price p{
         font-size: 15px;
         position: absolute;;
         left: 0;
@@ -95,13 +95,13 @@ export default {
         margin: auto
 
     }
-    .post-bidders p {
+    .auction-bidders p {
         position: absolute;
         right: 0;
         bottom: 0;
         margin: auto
     }
-    .post-status p {
+    .auction-status p {
         position: absolute;
         right: 0;
         bottom: 0;

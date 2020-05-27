@@ -1,12 +1,34 @@
 <template>
-  <div class="left-panel">
-    <div class="login-div" v-if="this.isAuthenticated">
+  <div class="right-panel">
+    <div class="login-div" v-if="this.isAuthenticated && !this.isAuthenticating">
       <div class="login-box">
-        <p>Welcome {{this.username}}</p>
-        <p>Auctions: {{this.auctions}}</p>
-        <p>Bids: {{this.bids}}</p>
+        <p v-text="'Welcome '+this.username"></p>
+        <p v-text="'Auctions: '+this.auctions"></p>
+        <p v-text="'Bids: '+this.bids"></p>
+        <button class="button" @click="logout">Logout</button>
       </div>
     </div>
+    <div class="login-div" v-if="!isAuthenticated && !isAuthenticating">
+      <div class="login-box">
+        <span v-if="loginError">
+          <p>Incorrect username or password</p>
+        </span>
+        <span v-if="usernameError">
+          <p>Please enter username.</p>
+        </span>
+        <input id="username-input" ref="username-input" class="input" type="text" placeholder="username" required="">
+        <span v-if="passwordError">
+          <p>Please enter password.</p>
+        </span>
+        <input id="password-input" ref="password-input" class="input" type="password" placeholder="password" required="">
+        <button class="button" @click="login">Login</button>
+         <div>
+        <a>Not a user?</a>
+        <a href='/register'>Register</a>
+        </div>
+      </div>
+    </div>
+    
   </div>
 </template>
 <script>
@@ -16,10 +38,11 @@ export default {
     name: 'RightPanel',
   data () {
     return {
-      isAuthenticated: {
-        type: Boolean,
-        default: false
-      },
+      isAuthenticated: false,
+      isAuthenticating: true,
+      usernameError: false,
+      passwordError: false,
+      loginError: false,
       username: {
           type: String,
           default: ""
@@ -39,7 +62,9 @@ export default {
       .then((resp) => {
         this.isAuthenticated = resp.data["isAuthenticated"]
         this.username = resp.data["username"]
+        this.isAuthenticating = false
       })
+
      axios.get('/user-auction-data')
         .then((resp) => {
             this.auctions = resp.data["auctions"]
@@ -50,8 +75,38 @@ export default {
             this.bids = resp.data["bids"]
             
     })
+    },
+    methods: {
+      login () {
+      if(this.$refs["username-input"].value.length == 0) { this.usernameError = true }
+      else { this.usernameError = false }
+
+      if(this.$refs["username-input"].value.length == 0) { this.passwordError = true }
+      else { this. passwordError = false }
+
+      if(!this.usernameError || ! this.passwordError) {
+        var userCredentials = {
+        "username": this.$refs["username-input"].value,
+        "password": this.$refs["password-input"].value
+        }
+        
+        axios.post('/login', userCredentials)
+        .then(() => {
+        location.reload() 
+        })
+        .catch(() => {
+          this.loginError = true
+        })
+      }
+    },
+
+    logout () {
+      axios.get("/logout")
+          .then(() => {
+              window.location.href = "/"
+          })
     }
-    
+  }
 }
 </script>
 

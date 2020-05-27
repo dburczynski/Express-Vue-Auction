@@ -28,23 +28,18 @@ router
 router
     .route("/user-status")
     .get((req,res) => {
-       
             if(req.isAuthenticated()) {
             res.json({
                 "isAuthenticated": true,
                 "username": req.user.username
             })
-    
         }
         else {
             res.json({
                 "isAuthenticated": false,
                 "username": ""
-               
             })
         }
-        
-     
     })
     .all(rejectMethod);
 

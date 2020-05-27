@@ -1,18 +1,29 @@
 <template>
-  <div class="left-panel">
+  <div class="auction-page">
    
-    <div class="login-div" v-if="isAuthenticated">
-      <div class="login-box">
+    <div class="create-auction-div" v-if="isAuthenticated">
+      <div class="auction-box">
+        <span v-if="nameError">
+          <p>Name can't be empty</p> 
+        </span>
         <input id="auction-name-input" ref="auction-name-input" class="input" type="text" placeholder="auction name" required="">
+        
+        <span v-if="priceError">
+          <p>Price can't be empty/smaller than 0.01</p>
+        </span>
         <input id="auction-price-input" ref="auction-price-input" class="input" type="number" min="0.01" step="0.01" placeholder="0.01" required="">
-        <div class="select-type">
+        <span v-if="typeError">
+          <p>Please select an option.</p>
+        </span>
+        <div>
             <select id="auction-type-select" ref="auction-type-select">
+              <option value="" disabled selected>Select type</option>
               <option value="BID"> Bid type</option>
               <option value="BUY">Buy now type</option>
             </select>
         </div>
         <button class="button" @click="save">Save</button>
-        <button class="button">Save and start</button>
+        <button class="button" @click="saveAndStart">Save and start</button>
         
       </div>
     </div>
@@ -28,7 +39,11 @@ export default {
       isAuthenticated: {
         type: Boolean,
         default: false
-      }
+      },
+      nameError: false,
+      priceError: false,
+      typeError: false
+
     }
   },
   beforeCreate() {
@@ -41,43 +56,67 @@ export default {
   methods: {
 
     save() {
-      var reqbody = {
+      if(this.$refs['auction-name-input'].value.length == 0) { this.nameError = true }
+      else { this.nameError = false }
+        
+      if(this.$refs['auction-price-input'].value.length == 0 || this.$refs['auction-price-input'].value < 0.01) { this.priceError = true; }
+      else { this.priceError = false }
+
+      if(this.$refs["auction-type-select"].options[this.$refs["auction-type-select"].selectedIndex].value.length == 0) { this.typeError = true}
+      else { this.typeError = false}
+      
+      if(!this.nameError && !this.priceError  && !this.typeError) {
+        var reqbody = {
           "name": this.$refs['auction-name-input'].value,
           "price": this.$refs['auction-price-input'].value,
           "status": "NEW",
           "type": this.$refs["auction-type-select"].options[this.$refs["auction-type-select"].selectedIndex].value
         }
-      axios.post("/auction/create", reqbody)
+        axios.post("/auction/create", reqbody)
         .then(() => {
-            window.location.href = "/"
+            window.location.href = "/myauctions"
         })
+      }
       
   
     },
     saveAndStart() {
+      if(this.$refs['auction-name-input'].value.length == 0) { this.nameError = true }
+      else { this.nameError = false }
+        
+      if(this.$refs['auction-price-input'].value.length == 0 || this.$refs['auction-price-input'].value < 0.01) { this.priceError = true; }
+      else { this.priceError = false }
 
+      if(this.$refs["auction-type-select"].options[this.$refs["auction-type-select"].selectedIndex].value.length == 0) { this.typeError = true}
+      else { this.typeError = false}
+
+      if(!this.nameError && !this.priceError  && !this.typeError) {
+        var reqbody = {
+          "name": this.$refs['auction-name-input'].value,
+          "price": this.$refs['auction-price-input'].value,
+          "status": "BID",
+          "type": this.$refs["auction-type-select"].options[this.$refs["auction-type-select"].selectedIndex].value
+        } 
+        axios.post("/auction/create", reqbody)
+        .then(() => {
+          window.location.href = "/myauctions"
+        })
+      }
     }
-   
+
+
+     
+    
   }
 }
 </script>
 
 <style lang="scss">
-  .left-panel {
+  .auction-page {
     height: 100%;
     width: 100%;
   }
-  .user-menu {
-    position: relative;
-    top: 10%;
-    left: 20%;
-    width: 250px;
-    background: #ffffff;
-    box-shadow: 0px 1px 5px black;
-
-
-  }
-  .login-div {
+  .create-auction-div {
     padding: 8% 0 0;
     position: relative;
     margin: auto; 
@@ -85,7 +124,7 @@ export default {
     min-width: 50px;
     
   }
-  .login-box {
+  .auction-box {
     background: #ffffff;
     text-align: center;
     max-width: 300px;
@@ -94,7 +133,7 @@ export default {
     box-shadow: 0px 1px 5px black;
   }
 
-  .login-box input  {
+  .auction-box input  {
     background: #f2f2f2;
     width: 100%;
     border: 0;
@@ -114,19 +153,5 @@ export default {
   }
   .button:hover {
     background: #1da16b;
-  } 
-
-  .menu-button {
-    background: #22bd7e;
-    height: 50px;
-    width: 130px;
-    border: 0;
-    margin: 60px;
-  }
-
-  .menu-button:hover {
-    background: #1da16b;
-  } 
-  
- 
+  }  
 </style>

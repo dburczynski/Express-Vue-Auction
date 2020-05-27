@@ -28,6 +28,32 @@ const rejectMethod = (_req, res, _next) => {
             })
         })
 
+    router.route("/buy")
+        .post((req, res) => {
+            Auction.findOne( { _id: req.body["index"]}, (err, doc) => {
+                doc.highest_bidder = req.user.username
+                doc.status = "SOLD"
+                doc.save()
+            })
+        })
+
+    router.route("/start")
+        .post((req, res) => {
+            Auction.findOne( { _id: req.body["index"]}, (err, doc) => {
+                doc.status = "BID"
+                doc.save()
+            })
+        })
+
+    router.route("/edit")
+        .post((req, res) => {
+            Auction.findOne( { _id: req.body["_id"]}, (err, doc) => {
+                doc.name = req.body["name"],
+                doc.price = req.body["price"],
+                doc.type = req.body["type"]
+                doc.save()
+            })
+        })
     router.route("/create")
     .get((req,res) => {
         if(req.isAuthenticated()) {

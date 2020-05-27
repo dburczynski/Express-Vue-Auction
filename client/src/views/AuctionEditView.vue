@@ -4,7 +4,7 @@
             <left-panel/>
         </div>
         <div id="centerContainer">
-            <auctions/>
+            <edit-auction-form :isLoading="true"/>
         </div>
         <div id="rightContainer">
             <right-panel/>
@@ -14,13 +14,13 @@
 </template>
 <script>
 import LeftPanel from '@/components/LeftPanel.vue'
-import Auctions from '@/components/Auctions.vue'
+import EditAuctionForm from '@/components/EditAuctionForm.vue'
 import RightPanel from '@/components/RightPanel.vue'
 export default {
-    name: 'Home',
+    name: 'AuctionEditView',
     components: {
         LeftPanel,
-        Auctions,
+        EditAuctionForm,
         RightPanel
     }
     
