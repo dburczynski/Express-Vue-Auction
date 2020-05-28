@@ -12,8 +12,9 @@
                 </div>
                 <div class="auction-status">
                     <p v-if="auction.highest_bidder == username" class="greenStatus">WON</p>
-                    <p v-if="auction.highest_bidder != username && username != auction.creator" class="redStatus">LOST</p>
-                    <p v-if="auction.creator == username" class="greenStatus">SOLD</p>
+                    <p v-if="auction.creator != username && auction.highest_bidder != username" class="redStatus">LOST</p>
+                    <p v-if="auction.creator == username && auction.status == 'SOLD'" class="greenStatus">SOLD</p>
+                    <p v-if="auction.creator == username && auction.status == 'FAILED'" class="redStatus">FAILED</p>
                 </div>
             </div>
         </div>
@@ -41,6 +42,7 @@ export default {
       axios.get('/user-status')
             .then((resp) => {
                 this.isAuthenticated = resp.data["isAuthenticated"]    
+                this.username = resp.data["username"]
                 this.isAuthenticating = false
 
                 if(this.isAuthenticated == false) { window.location.href = "/" }   

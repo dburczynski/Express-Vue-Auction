@@ -57,65 +57,46 @@ const server = require("./https")(app);
 const port = process.env.port;
 
 
+const io = socketio(server) 
 
-// const io = socketio(server) 
+io.use(passportSocketIo.authorize({
+    key: "connect.sid",
+    secret: process.env.APP_SECRET,
+    store: sessionStore,
+    passport: passport,
+    cookieParser: cookieParser
+    }))
 
-// io.use(passportSocketIo.authorize({
-//     key: "connect.sid",
-//     secret: process.env.APP_SECRET,
-//     store: sessionStore,
-//     passport: passport,
-//     cookieParser: cookieParser
-// }))
+io.on("connection", (socket) => {
+     console.log(`Made socket connection: ${socket.id}`);
 
-// io.on("connection", (socket) => {
-//     console.log(`Made socket connection: ${socket.id}`);
+     socket.on("join-auction", (data) => {
+         if(socket.request.user && socket.request.user.logged_in) {
+                console.log("Socket: "+socket.id+" is joining "+data._id)
+                socket.join(data._id)
+            }
+     })
+     socket.on("auction-start", (data) => {
+        if(socket.request.user && socket.request.user.logged_in) {
+            let auction_socket = {
+               socketId: data._id
+           }
+           console.log("New auction socket created, id: "+auction_socket.socketId)
+        }
+     })
+     socket.on("leave-auction", (data) => {
+        if(socket.request.user && socket.request.user.logged_in) {
+            console.log("Socket: "+socket.id+" is leaving "+data._id)
+            socket.leave(data.socketId);
+        }
+     })
+     socket.on("auction-bid", (data) => {
+            if(socket.request.user && socket.request.user.logged_in) {
+                io.sockets.in(data._id).emit("new-bid")
+            }
+     })
 
-
-//     socket.on("create-room", (data) => {
-//         if(socket.request.user && socket.request.user.logged_in) {
-//             let modifiedData = {
-//                 roomName: data.roomName,
-//                 socketId: socket.id
-//             };
-//             console.log("Creating new room: "+modifiedData.roomName)
-//             let saveRoom = new Room( {name: modifiedData.roomName } );
-//             saveRoom.save();
-//             io.sockets.emit("create-room", modifiedData);
-//         }
-//     });
-//     socket.on("joinRoom", (data) => {
-//         if(socket.request.user && socket.request.user.logged_in) {
-//             console.log("Socket: "+socket.id+" is joining "+data.roomName);
-//             socket.join(data.roomName);
-//         }
-//     })
-
-//     socket.on("leaveRoom", (data) => {
-//         if(socket.request.user && socket.request.user.logged_in) {
-//             socket.leave(data.roomName)
-//         }
-//     })
-
-//     socket.on("send-message", (data) => {
-        
-//         if(socket.request.user && socket.request.user.logged_in) {
-//             let modifiedData = {
-//                 user: socket.request.user.username,
-//                 message: data.message,
-//                 roomName: data.roomName
-//             }
-//             console.log(socket.request.user+" is sending message to room "+modifiedData.roomName)
-//             saveMessage = new Message({autor: modifiedData.user, 
-//                                         roomName: modifiedData.roomName,
-//                                         message: modifiedData.message});
-//             saveMessage.save();
-//             console.log(socket.rooms)
-//             io.sockets.in(modifiedData.roomName).emit("recieve-message",modifiedData);
-
-//         }
-//     })
-// });
+    })
 
 server.listen(port, () => {
     console.log(`Serwer działa pod adresem: https://localhost:${port}`);

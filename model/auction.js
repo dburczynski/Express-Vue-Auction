@@ -8,7 +8,7 @@ const auctionSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['NEW','BID','SOLD'],
+        enum: ['NEW','BID','SOLD','FAILED'],
         default: 'NEW'
     },
     type: {
@@ -24,6 +24,9 @@ const auctionSchema = new Schema({
         type: Number,
         min: [0.01, "Not for free!"]
 
+    },
+    end_time: {
+        type: Number
     },
     bidders: [{type: String}],
     highest_bidder: {

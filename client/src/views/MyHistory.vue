@@ -31,6 +31,7 @@ export default {
 <style lang="scss">
 #homeContainer {
     height: 100%;
+    overflow: scroll;
 }
 #leftContainer {
         height: 100%;

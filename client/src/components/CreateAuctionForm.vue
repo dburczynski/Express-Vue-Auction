@@ -23,8 +23,6 @@
             </select>
         </div>
         <button class="button" @click="save">Save</button>
-        <button class="button" @click="saveAndStart">Save and start</button>
-        
       </div>
     </div>
   </div>
@@ -79,34 +77,7 @@ export default {
       }
       
   
-    },
-    saveAndStart() {
-      if(this.$refs['auction-name-input'].value.length == 0) { this.nameError = true }
-      else { this.nameError = false }
-        
-      if(this.$refs['auction-price-input'].value.length == 0 || this.$refs['auction-price-input'].value < 0.01) { this.priceError = true; }
-      else { this.priceError = false }
-
-      if(this.$refs["auction-type-select"].options[this.$refs["auction-type-select"].selectedIndex].value.length == 0) { this.typeError = true}
-      else { this.typeError = false}
-
-      if(!this.nameError && !this.priceError  && !this.typeError) {
-        var reqbody = {
-          "name": this.$refs['auction-name-input'].value,
-          "price": this.$refs['auction-price-input'].value,
-          "status": "BID",
-          "type": this.$refs["auction-type-select"].options[this.$refs["auction-type-select"].selectedIndex].value
-        } 
-        axios.post("/auction/create", reqbody)
-        .then(() => {
-          window.location.href = "/myauctions"
-        })
-      }
     }
-
-
-     
-    
   }
 }
 </script>
