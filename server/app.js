@@ -12,9 +12,15 @@ const path = require("path")
 var history = require('connect-history-api-fallback');
 const Auction = require("./model/auction")
 const Message = require("./model/message")
+const cors = require("cors")
 
+
+app.use(cors())
 //app.set("view engine", "ejs");
 app.use("/public",express.static(__dirname + "/public"));
+app.use("/js", express.static(__dirname + "/public/js"))
+app.use("/css", express.static(__dirname + "/public/css"))
+
 app.use(history())
 // wszelkie dane przesyłamy w formacie JSON
 app.use(express.urlencoded({ extended: false }));
@@ -57,7 +63,7 @@ app.use("/api/conversations",messenger_routes)
 
     // app.use(express.static(path.join(__dirname, "public")));
 
- app.get('*', (req,res) => res.sendfile(__dirname+"/public/index.html"));
+ app.get('/*', (req,res) => res.sendFile(__dirname+"/public/index.html"));
 
 app.use((_, res) => {
     // Not Found
@@ -74,7 +80,7 @@ const io = socketio(server)
 
 io.use(passportSocketIo.authorize({
     key: "connect.sid",
-    secret: process.env.APP_SECRET,
+    secret: "$sekretny $sekret",
     store: sessionStore,
     passport: passport,
     cookieParser: cookieParser
