@@ -74,7 +74,7 @@ router
 router
     .route("/login")
     .post(passport.authenticate("local"), async (req, res) => {
-        await res.redirect("/user-status");
+        await res.redirect("/api/user-status");
     })
     .all(rejectMethod);
 
@@ -82,7 +82,7 @@ router
     .route("/logout")
     .get((req, res) => {
         req.logout();
-        res.redirect("/user-status");
+        res.redirect("/api/user-status");
     })
     .all(rejectMethod);
 
@@ -98,20 +98,49 @@ router
                 password: passwordHash
             });
             let doc = await user.save();
-            res.json(doc);
-        } catch (err) {
+            res.json({
+                "usernameError": false,
+                "passwordError": false
+            });
+        } 
+        catch (err) {
             if (!req.body.password) {
-                // Unprocessable Entity
-                res.status(422).json({
-                    password: "Error – password must not be empty!"
+                res.json({
+                    "usernameError": false,
+                    "passwordError": true
                 });
-            } else {
-                res.status(422).json(User.processErrors(err));
+            } 
+            if( !req.body.username) {
+                res.json({
+                    "usernameError": true,
+                    "passwordError": false
+                });
             }
-        }
+            if(!req.body.username && !req.body.password) {
+                res.json({
+                    "usernameError": true,
+                    "passwordError": true
+                });
+            }
+        } 
     })
     .all(rejectMethod);
-
+router
+    .route("/user-exists")
+    .post((req,res) => {
+        User.findOne( {"username": req.body["username"]}, (err,docs) => {
+            if(!docs) {
+                res.json({
+                    "loginError": false
+                })
+            }
+            else {
+                res.json({
+                    "loginError": true
+                })
+            }
+        })
+    })
 // przykładowe „API” – oczwiście musi być serwowane przez HTTPS!
 router
     .route("/api/users")

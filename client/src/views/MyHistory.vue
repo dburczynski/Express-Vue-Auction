@@ -1,16 +1,17 @@
 <template>
-    <div id="homeContainer">
-        <div id="leftContainer">
-            <left-panel/>
-        </div>
-        <div id="centerContainer">
-            <my-history/>
-        </div>
-        <div id="rightContainer">
-            <right-panel/>
+    <div class="my-history-page">
+        <div class="my-history-container">
+            <div class="my-history-left">
+                <left-panel/>
+            </div>
+            <div class="my-history-center">
+                <my-history/>
+            </div>
+            <div class="my-history-right">
+                <right-panel/>
+            </div>
         </div>
     </div>
-   
 </template>
 <script>
 import LeftPanel from '@/components/LeftPanel.vue'
@@ -29,28 +30,42 @@ export default {
 </script>
 
 <style lang="scss">
-#homeContainer {
-    height: 100%;
-    overflow: scroll;
-}
-#leftContainer {
+    .my-history-page {
         height: 100%;
-        width: 25%;
-        float: left;
-        border-collapse: collapse;
+        width: 100%;
+        display: inline-flex;
+        flex-direction: column;
         position: relative;
+
     }
-    #centerContainer {
+    .my-history-container {
+        display: inline-flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
         height: 100%;
-        width: 50%;
-   
-        float: left;
-        border-collapse: collapse;
+        overflow: auto;
+        justify-content: center;
     }
-    #rightContainer {
-        height: 100%;
-        width: 25%;
-        float: left;
+    .my-history-left {
+        height: 80%;
+        max-width: 400px;
         border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .my-history-center {
+        height: 80%;
+        max-width: 400px;
+        border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .my-history-right {
+        height: 80%;
+        max-width: 400px;
+        border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
     }
 </style>

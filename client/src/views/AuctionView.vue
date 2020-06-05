@@ -1,13 +1,15 @@
 <template>
-    <div id="homeContainer">
-        <div id="leftContainer">
-            <left-panel/>
-        </div>
-        <div id="centerContainer">
-            <auction :isLoading="true"/>
-        </div>
-        <div id="rightContainer">
-            <right-panel/>
+     <div class="auction-page">
+        <div class="auction-container">
+            <div class="auction-left">
+                <left-panel/>
+            </div>
+            <div class="auction-center">
+                <auction/>
+            </div>
+            <div class="auction-right">
+                <right-panel/>
+            </div>
         </div>
     </div>
    
@@ -28,29 +30,42 @@ export default {
 </script>
 
 <style lang="scss">
-#homeContainer {
-    height: 100%;
-    overflow: scroll;
-
-}
-#leftContainer {
+    .auction-page {
         height: 100%;
-        width: 25%;
-        float: left;
-        border-collapse: collapse;
+        width: 100%;
+        display: inline-flex;
+        flex-direction: column;
         position: relative;
+
     }
-    #centerContainer {
+    .auction-container {
+        display: inline-flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
         height: 100%;
-        width: 50%;
-   
-        float: left;
-        border-collapse: collapse;
+        overflow: auto;
+        justify-content: center;
     }
-    #rightContainer {
-        height: 100%;
-        width: 25%;
-        float: left;
+    .auction-left {
+        height: 80%;
+        max-width: 400px;
         border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .auction-center {
+        height: 80%;
+        max-width: 400px;
+        border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .auction-right {
+        height: 80%;
+        max-width: 400px;
+        border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
     }
 </style>

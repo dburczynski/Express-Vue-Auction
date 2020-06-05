@@ -1,16 +1,17 @@
 <template>
-    <div id="homeContainer">
-        <div id="leftContainer">
-            <left-panel/>
-        </div>
-        <div id="centerContainer">
-            <my-auctions/>
-        </div>
-        <div id="rightContainer">
-            <right-panel/>
+    <div class="my-auctions-page">
+        <div class="my-auctions-container">
+            <div class="my-auctions-left">
+                <left-panel/>
+            </div>
+            <div class="my-auctions-center">
+                <my-auctions/>
+            </div>
+            <div class="my-auctions-right">
+                <right-panel/>
+            </div>
         </div>
     </div>
-   
 </template>
 <script>
 import LeftPanel from '@/components/LeftPanel.vue'
@@ -28,28 +29,43 @@ export default {
 </script>
 
 <style lang="scss">
-#homeContainer {
-    height: 100%;
-    overflow: scroll;
-}
-#leftContainer {
+    .my-auctions-page {
         height: 100%;
-        width: 25%;
-        float: left;
-        border-collapse: collapse;
+        width: 100%;
+        display: inline-flex;
+        flex-direction: column;
         position: relative;
+
     }
-    #centerContainer {
+    .my-auctions-container {
+        display: inline-flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
         height: 100%;
-        width: 50%;
-   
-        float: left;
-        border-collapse: collapse;
+        overflow: auto;
+        justify-content: center;
     }
-    #rightContainer {
-        height: 100%;
-        width: 25%;
-        float: left;
+    .my-auctions-left {
+        height: 80%;
+        max-width: 400px;
         border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
     }
+    .my-auctions-center {
+        height: 80%;
+        max-width: 400px;
+        border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .my-auctions-right {
+        height: 80%;
+        max-width: 400px;
+        border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
 </style>

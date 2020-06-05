@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 (async () => {
     try {
-        await mongoose.connect(process.env.DBURI, {
+        await mongoose.connect('mongodb://vuejs:xdxd123@ds229918.mlab.com:29918/heroku_7jllzdhr', {
             useUnifiedTopology: true,
             useNewUrlParser: true,
             useCreateIndex: true

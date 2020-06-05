@@ -1,15 +1,16 @@
 <template>
   <div class="right-panel">
-    <div class="login-div" v-if="this.isAuthenticated && !this.isAuthenticating">
-      <div class="login-box">
+    <div class="right-panel-div" v-if="this.isAuthenticated && !this.isAuthenticating">
+      <div class="right-panel-box">
         <p v-text="'Welcome '+this.username"></p>
         <p v-text="'Auctions: '+this.auctions"></p>
         <p v-text="'Bids: '+this.bids"></p>
-        <button class="button" @click="logout">Logout</button>
+        <button class="right-panel-button" @click="logout">Logout</button>
+        <button class="right-panel-button" @click="messenger">Messenger</button>
       </div>
     </div>
-    <div class="login-div" v-if="!isAuthenticated && !isAuthenticating">
-      <div class="login-box">
+    <div class="right-panel-div" v-if="!isAuthenticated && !isAuthenticating">
+      <div class="right-panel-box">
         <span v-if="loginError">
           <p>Incorrect username or password</p>
         </span>
@@ -21,7 +22,7 @@
           <p>Please enter password.</p>
         </span>
         <input id="password-input" ref="password-input" class="input" type="password" placeholder="password" required="">
-        <button class="button" @click="login">Login</button>
+        <button class="right-panel-button" @click="login">Login</button>
          <div>
         <a>Not a user?</a>
         <a href='/register'>Register</a>
@@ -58,19 +59,19 @@ export default {
   }
   },
   beforeCreate() {
-    axios.get('/user-status')
+    axios.get('/api/user-status')
       .then((resp) => {
         this.isAuthenticated = resp.data["isAuthenticated"]
         this.username = resp.data["username"]
         this.isAuthenticating = false
       })
 
-     axios.get('/user-auction-data')
+     axios.get('/api/user-auction-data')
         .then((resp) => {
             this.auctions = resp.data["auctions"]
             
     })
-    axios.get('/user-bid-data')
+    axios.get('/api/user-bid-data')
         .then((resp) => {
             this.bids = resp.data["bids"]
             
@@ -90,7 +91,7 @@ export default {
         "password": this.$refs["password-input"].value
         }
         
-        axios.post('/login', userCredentials)
+        axios.post('/api/login', userCredentials)
         .then(() => {
         location.reload() 
         })
@@ -101,78 +102,61 @@ export default {
     },
 
     logout () {
-      axios.get("/logout")
+      axios.get("/api/logout")
           .then(() => {
               window.location.href = "/"
           })
+    },
+
+    messenger() {
+      window.location.href = "/messenger"
     }
   }
 }
 </script>
 
 <style lang="scss">
-  .left-panel {
+  .right-panel {
     height: 100%;
     width: 100%;
+    margin-top: 150px;
   }
-  .user-menu {
-    position: relative;
-    top: 10%;
-    left: 20%;
-    width: 250px;
-    background: #ffffff;
-    box-shadow: 0px 1px 5px black;
-
-
-  }
-  .login-div {
+  .right-panel-div {
     padding: 8% 0 0;
     position: relative;
     margin: auto; 
-    width: 300px;
-    min-width: 50px;
+    width: $div_width;
+    margin: 40px;
     
   }
-  .login-box {
-    background: #ffffff;
+  .right-panel-box {
+    background: $div_background;
     text-align: center;
-    max-width: 300px;
+    max-width: $div_width;
     padding: 40px;
     position: relative;
-    box-shadow: 0px 1px 5px black;
+    box-shadow: $box_shaddow;
   }
 
-  .login-box input  {
-    background: #f2f2f2;
+  .right-panel-box input  {
+    background: $input_background;
     width: 100%;
     border: 0;
     margin: 0 0 15px;
     padding: 15px;
-    box-sizing: border-box;
-    font-size: 14px;
+    box-sizing: $box_size;
+    font-size: $normal_font_size;
     
   }
 
-  .button {
-    background: #22bd7e;
+  .right-panel-button {
+    background: $button_color;
     height: 40px;
     width: 100px;
     border: 0;
-    margin: 0px 0px 15px;
+    margin: 5px 10px 15px;
   }
-  .button:hover {
-    background: #1da16b;
-  } 
-
-  .menu-button {
-    background: #22bd7e;
-    height: 50px;
-    width: 130px;
-    border: 0;
-    margin: 60px;
-  }
-
-  .menu-button:hover {
-    background: #1da16b;
+  .right-panel-button:hover {
+    background: $button_hover_color;
   } 
 </style>

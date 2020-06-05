@@ -6,6 +6,8 @@ import MyHistoryView from '../views/MyHistory.vue'
 import CreateAuctionView from '../views/CreateAuction.vue'
 import AuctionView from '../views/AuctionView.vue'
 import AuctionEditView from '../views/AuctionEditView.vue'
+import MessengerView from '../views/MessengerView.vue'
+import RegisterView from '../views/RegisterView.vue'
 
 Vue.use(VueRouter) 
 
@@ -14,6 +16,11 @@ const routes = [
         path: '/',
         name: 'Home',
         component: Home
+    },
+    {
+        path: '/register',
+        name: 'Register',
+        component: RegisterView
     },
     {
         path: '/myauctions',
@@ -41,17 +48,12 @@ const routes = [
         path: '/edit-auction/id:(\\w+)',
         name: 'AuctionEditView',
         component: AuctionEditView
+    },
+    {
+        path: '/messenger',
+        name: 'MessengerView',
+        component: MessengerView
     }
-    // {
-    //     path: '/login',
-    //     name: 'Login',
-    //     component: Login
-    // },
-    // {
-    //     path: '/register',
-    //     name: 'Register',
-    //     component Register
-    // }
 ]
 
 const router = new VueRouter({

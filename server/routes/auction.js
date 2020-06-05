@@ -10,10 +10,11 @@ const rejectMethod = (_req, res, _next) => {
 };
 
     router.route("/auctions")
-    .get((req,res) => {
+    .post((req,res) => {
         Auction.find(
             { "status": "BID" }
-        ).limit(10)
+        ).skip(req.body["index"])
+        .limit(10)
         .sort( { "bidders": -1 })
         .exec((err, docs) => {
             res.json(docs)
@@ -27,43 +28,26 @@ const rejectMethod = (_req, res, _next) => {
                 res.json({ "auction": docs })
             })
         })
+        router.route("/auction-price")
+        .post((req,res) => {
+            Auction.findOne( {_id: req.body["_id"]}, (err,doc) => {
+                res.json({ "price": doc.price })
+            })
+        }) 
 
     router.route("/buy")
         .post((req, res) => {
-            Auction.findOne( { _id: req.body["index"]}, (err, doc) => {
-                var temp = new Date(doc.end_time).getTime()
-                if(temp <= new Date().getTime() && doc.type == "BUY" && doc.status == "BID") {
+            Auction.findOne( { _id: req.body["_id"]}, (err, doc) => {
+                if(doc.type == "BUY" && doc.status == "BID") {
                     doc.highest_bidder = req.user.username
                     doc.status = "SOLD"
                     doc.save()
                 }
-                
             })
         })
 
     router.route("/start")
         .post((req, res) => {
-            Auction.findOne( { _id: req.body["index"]}, (err, doc) => {
-                if(req.user.username == doc.creator && doc.status == "NEW") {
-                    doc.end_time = new Date(new Date().getTime()+(1 * 3 * 60 * 1000)).getTime();
-                    doc.status = "BID"
-                    doc.save()
-                }
-                setTimeout(() => {
-                    Auction.findOne( { _id : req.body["index"] }, (err,doc) => {
-    
-                        if(doc.highest_bidder != null) {
-                            doc.status = "SOLD"
-                        }
-                        else {
-                            doc.status = "FAILED"
-                        }
-                        doc.save()
-    
-                        } 
-                    )},(1*1*60*1000))     
-            })
-            
             res.json({})
         })
 
@@ -85,7 +69,7 @@ const rejectMethod = (_req, res, _next) => {
             } )
         }
         else {
-            res.redirect("/login")
+            res.redirect("/api/login")
         }
 
     })
@@ -117,30 +101,36 @@ const rejectMethod = (_req, res, _next) => {
     })
     
     router.route("/myauctions")
-    .get((req,res) => {
+    .post((req,res) => {
         if(req.isAuthenticated()) {
             Auction.find( { $or: [{creator: req.user.username, status: "NEW"},
                             {creator: req.user.username, status: "BID"},
                             {bidders: req.user.username, status: "BID"}] }, (err,docs) => {
-               res.json(docs);
+               
             })
-        }
-        else {
-            res.redirect("/")
-        }
-    })
-    router.route("/myhistory")
-    .get((req,res) => {
-        if(req.isAuthenticated()) {
-            Auction.find( { $or: [{creator: req.user.username, status: "SOLD"},
-                            {creator: req.user.username, status: "FAILED"},
-                            {bidders: req.user.username, status: "SOLD", highest_bidder: { $in: [req.user.username]}},
-                            {bidders: req.user.username, status: "SOLD", highest_bidder: { $nin: [req.user.username]}}  ] }, (err, docs) => {
+            .skip(req.body["index"]).limit(10).exec((err, docs) => {
                 res.json(docs)
             })
         }
         else {
-            res.redirect("/")
+            res.redirect("/api/")
+        }
+    })
+    router.route("/myhistory")
+    .post((req,res) => {
+        if(req.isAuthenticated()) {
+            Auction.find( { $or: [{creator: req.user.username, status: "SOLD"},
+                            {creator: req.user.username, status: "FAILED"},
+                            {bidders: req.user.username , status: "SOLD", highest_bidder: { $in: [req.user.username]}},
+                            {bidders: req.user.username , status: "SOLD", highest_bidder: { $nin: [req.user.username]}}  ] })
+            .skip(req.body["index"]).limit(10).exec((err, docs) => {
+                res.json(docs)
+            })
+            
+            
+        }
+        else {
+            res.redirect("/api/")
         }
     })
 

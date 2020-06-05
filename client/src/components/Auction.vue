@@ -8,18 +8,23 @@
       <p v-text="'Creator: '+auction.creator"/>
       <p v-if="auction.end_time != null && new Date(this.auction.end_time).getTime() >= new Date().getTime()" v-text="'Time left: '+this.time_left"/>
       <div v-if="isAuthenticated && auction.creator == username && auction.status == 'NEW'">
-        <button class="button" @click="edit">Edit</button>
-        <button class="button" @click="start">Start</button>
+        <button class="auction-button" @click="edit">Edit</button>
+        <button class="auction-button" @click="start">Start</button>
       </div>
+      <div v-if="isAuthenticated && auction.creator == username && auction.status == 'SOLD'">
+          <button class="auction-button" @click="newConversation">Contact buyer</button>
+      </div> 
       <div v-if="isAuthenticated && !isAuthenticating && isLoaded  && auction.creator != username">
         <div v-if="auction.type == 'BID' && auction.status == 'BID'">
           <input id="auction-bid-input" ref="auction-bid-input" class="input" type="number" :min="auction.price+0.01" step="0.01" :placeholder="auction.price" required="">
-          <button class="button" @click="bid">Bid</button>
+          <button class="auction-button" @click="bid">Bid</button>
         </div>
         <div v-if="auction.type == 'BUY' && auction.status == 'BID'">
-          <button class="button" @click="buy">Buy now</button>
-        </div
-        >
+          <button class="auction-button" @click="buy">Buy now</button>
+        </div>
+        <div v-if="auction.status == 'SOLD' && auction.highest_bidder == username">
+          <button class="auction-button" @click="newConversation">Contact seller</button>
+        </div> 
       </div>
     </div>
   </div>
@@ -47,7 +52,7 @@ export default {
     }
   },
   beforeCreate() {
-    axios.get('/user-status')
+    axios.get('/api/user-status')
       .then((resp) => {
         this.isAuthenticated = resp.data["isAuthenticated"]
         this.username = resp.data["username"]
@@ -55,7 +60,7 @@ export default {
         var json = {
         "index": window.location.href.split('id:').slice(-1)[0].toString()
         }
-        axios.post('/auction/auction', json)
+        axios.post('/api/auction/auction', json)
         .then(resp => {
           this.auction = resp.data["auction"]
           this.isLoaded = true
@@ -108,11 +113,10 @@ export default {
         this.socket.emit('leave-auction', { "_id": this.auction._id }) 
       }
     }
-    
     this.socket.on("new-bid", () => {
-       axios.post('/auction/auction', { "index": this.auction._id})
+       axios.post('/api/auction/auction-price', { "_id": this.auction._id})
       .then(resp => {
-        this.auction = resp.data["auction"]
+        this.auction.price = resp.data["price"]
       })
     })
   },
@@ -120,37 +124,32 @@ export default {
   methods: {
     buy() {
       var reqjson =  {
-        "index": this.auction._id
+        "_id": this.auction._id
       }
-      axios.post("/auction/buy", reqjson)
+      axios.post("/api/auction/buy", reqjson)
       .then(() => {})
       window.location.href = "/myauctions"
     },
 
     start() {
-      var reqjson = {
-        "index": this.auction._id
-      }
-      axios.post("/auction/start", reqjson)
-        .then((resp) => {
-          console.log(""+resp)
-          console.log(this.auction._id)
-          this.socket.emit("auction-start", { _id: this.auction._id })
-        })
-        window.location.href = "/myauctions"
+      this.socket.emit("auction-start", { _id: this.auction._id })
+      window.location.href = "/myauctions"
     },
 
     edit() {
-      var path = "/edit-auction/id:"+this.post._id
+      var path = "/edit-auction/id:"+this.auction._id
       window.location.href = path
     },
     bid() {
-
-      axios.post("/auction/bid", { "_id": this.auction._id, "bid": this.$refs["auction-bid-input"].value})
-      .then((resp) => {
-        if(resp["status"] == true)
-          console.log(true)
           this.socket.emit("auction-bid", { "_id": this.auction._id, "new_bid": this.$refs["auction-bid-input"].value })   
+    },
+    newConversation() {
+      var req = {
+        "users": [this.auction.creator, this.auction.highest_bidder]
+      }
+      axios.post("/api/conversations/conversation-create", req)
+      .then(() => {
+        window.location.href = "/messenger"        
       })
     }
   }
@@ -161,39 +160,38 @@ export default {
 <style lang="scss">
 
   .auction-div {
-    padding: 8% 0 0;
     position: relative;
-    margin: auto; 
-    width: 300px;
-    min-width: 50px;
+    margin-top: 100px;
+    height: 100%;
+    width: $div_width;
   }
   .auction-box {
-    background: #ffffff;
+    background: $div_background;
     text-align: center;
-    max-width: 300px;
+    max-width: $div_width;
     padding: 40px;
     position: relative;
-    box-shadow: 0px 1px 5px black;
+    box-shadow: $box_shaddow;
+    text-align: center;
   }
   .auction-box input  {
-    background: #f2f2f2;
+    background: $input_background;
     width: 100%;
-    border: 0;
+    border: $no_border;
     margin: 0 0 15px;
     padding: 15px;
-    box-sizing: border-box;
+    box-sizing: $box_size;
     font-size: 14px;
-    
   }
-  .button {
-    background: #22bd7e;
+  .auction-button {
+    background: $button_color;
     height: 40px;
     width: 100px;
-    border: 0;
+    border: $no_border;
     margin: 15px;
   }
-  .button:hover {
-    background: #1da16b;
+  .auction-button:hover {
+    background: $button_hover_color;
   } 
 
 </style>

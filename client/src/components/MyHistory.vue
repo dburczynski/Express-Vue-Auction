@@ -1,23 +1,28 @@
 <template>
-    <div class="auction-list" v-if="isAuthenticated && !isAuthenticating">
+    <div class="my-history-list" id="auction-list" ref="auction-list"  v-if="isAuthenticated && !isAuthenticating">
         <div v-for="auction in auctions" :key="auction._id">
-            <div class="auction-break">               
+            <div class="my-history-break">               
             </div>
-            <div class="auction" @click="navigateToAuction(auction)">
-                <div class="auction-name">
-                    <p>{{auction.name}}</p>
+            <div class="my-history" @click="navigateToAuction(auction)">
+                <div class="my-history-name">
+                    <h1>{{auction.name}}</h1>
                 </div>
-                <div class="auction-price">
+                <div class="my-history-price">
                     <p>Price: {{auction.price}}</p>
                 </div>
-                <div class="auction-status">
-                    <p v-if="auction.highest_bidder == username" class="greenStatus">WON</p>
-                    <p v-if="auction.creator != username && auction.highest_bidder != username" class="redStatus">LOST</p>
-                    <p v-if="auction.creator == username && auction.status == 'SOLD'" class="greenStatus">SOLD</p>
-                    <p v-if="auction.creator == username && auction.status == 'FAILED'" class="redStatus">FAILED</p>
+                <div class="my-history-status">
+                    <p v-if="auction.highest_bidder == username" class="my-history-greenStatus">WON</p>
+                    <p v-if="auction.creator != username && auction.highest_bidder != username" class="my-history-redStatus">LOST</p>
+                    <p v-if="auction.creator == username && auction.status == 'SOLD'" class="my-history-greenStatus">SOLD</p>
+                    <p v-if="auction.creator == username && auction.status == 'FAILED'" class="my-history-redStatus">FAILED</p>
                 </div>
             </div>
+            
         </div>
+         <div class="my-history-load-div">
+                <button  v-if="this.auctionsLoaded != 0 && this.auctionsLoaded % 10 === 0" class="my-history-load-button" @click="loadAuctions">Load Auctions</button> 
+            </div>
+
     </div>
 </template>
 <script>
@@ -35,87 +40,100 @@ export default {
         return {
             isAuthenticated: false,
             isAuthenticating: true,
-            auctions: null
+            auctions: [],
+            auctionsLoaded: 0
         }
     },
     beforeCreate() {
-      axios.get('/user-status')
-            .then((resp) => {
-                this.isAuthenticated = resp.data["isAuthenticated"]    
-                this.username = resp.data["username"]
-                this.isAuthenticating = false
-
-                if(this.isAuthenticated == false) { window.location.href = "/" }   
-            });
-        axios.get('/auction/myhistory')
+        axios.get('/api/user-status')
         .then((resp) => {
-            this.auctions = resp.data
-        })
+            this.isAuthenticated = resp.data["isAuthenticated"]    
+            this.username = resp.data["username"]
+            this.isAuthenticating = false
+
+            if(this.isAuthenticated == false) { window.location.href = "/" }   
+            else {
+                axios.post('/api/auction/myhistory', { "index": this.auctionsLoaded})
+                .then((resp) => {
+                    this.auctions = resp.data
+                    this.auctionsLoaded = this.auctions.length
+                })  
+            }
+        });
     },  
     methods: {
         navigateToAuction(auction) {
             window.location.href = "/auction/id:"+auction._id;
+        },
+        loadAuctions() {      
+            axios.post('/api/auction/myhistory', { "index": this.auctionsLoaded})
+            .then((resp) => {
+                this.auctions = this.auctions.concat(resp.data)
+                this.auctionsLoaded = this.auctions.length
+            })
         }
     }
 }
 </script>
 
 <style lang="scss">
-    .auction-list{
-        position: relative;
-        width: 800px;
-        height: 95%;
+    .my-history-list{
+       position: relative;
+        height: 100%;
+        width: $div_width;
+        margin-top: 100px;
         overflow-y: scroll;
         scrollbar-width: none;
         -ms-overflow-style: none;
     }
-    .auction {
-        
-        background: #ffffff;
-        position: relative;
-        width: 600px;
-        margin: 0 auto;
-        height: 80px;
-        box-shadow: 0px 1px 5px black;
-        cursor: pointer;
+     ::-webkit-scrollbar { 
+        display: none;
     }
-    .auction-break {
-        height: 40px;
+    .my-history {
+        background: $div_background;
+        position: relative;
+        max-width: $div_width;
+        height: 160px;
+        padding: 40px;
+        box-shadow: $box_shaddow;
+        position: relative;
+        cursor: pointer;
+        text-align: center;
+    }
+    .my-history-break {
+        height: 30px;
         width: 100%;
     }
-    .auction-name {
-        font-size: 20px;
-        left: 0;
-        top: 0;
-        margin: 10px;
+    .my-history-price p{
+        font-size: $normal_font_size;
     }
-    .auction-price p{
-        font-size: 15px;
-        position: absolute;;
-        left: 0;
-        bottom: 0;
-        margin: auto
-
+    .my-history-bidders p {
+        font-size: $normal_font_size;
     }
-    .auction-bidders p {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        margin: auto
+    .my-history-status p {
+        font-size: $normal_font_size;
     }
-    .auction-status p {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        margin: auto
+    .my-history-redStatus{
+        color: $red;
     }
-    .redStatus{
-        color: red;
+    .my-history-greenStatus {
+        color: $green;
     }
-    .greenStatus {
-        color: green;
+    .my-history-load-div {
+        position: relative;
+        width: $div_width;
+        margin: 0 auto;
+        height: 40px;
     }
-    .blackStatus {
-        color: black
+    .my-history-load-button {
+        background: $button_color;
+        height: 40px;
+        margin-top: 20px;
+        width: $div_width;
+        border: 0;
+        
     }
+    .my-history-button:hover {
+        background: $button_hover_color;
+    } 
 </style>

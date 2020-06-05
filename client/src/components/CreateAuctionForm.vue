@@ -1,8 +1,7 @@
 <template>
-  <div class="auction-page">
    
-    <div class="create-auction-div" v-if="isAuthenticated">
-      <div class="auction-box">
+    <div class="create-auction-div">
+      <div class="create-auction-box" v-if="isAuthenticated">
         <span v-if="nameError">
           <p>Name can't be empty</p> 
         </span>
@@ -22,10 +21,9 @@
               <option value="BUY">Buy now type</option>
             </select>
         </div>
-        <button class="button" @click="save">Save</button>
+        <button class="create-auction-button" @click="save">Save</button>
       </div>
     </div>
-  </div>
 </template>
 <script>
 import axios from '@/../node_modules/axios/dist/axios.min.js'
@@ -45,7 +43,7 @@ export default {
     }
   },
   beforeCreate() {
-    axios.get('/user-status')
+    axios.get('/api/user-status')
       .then((resp) => {
         this.isAuthenticated = resp.data["isAuthenticated"]
       })
@@ -70,7 +68,7 @@ export default {
           "status": "NEW",
           "type": this.$refs["auction-type-select"].options[this.$refs["auction-type-select"].selectedIndex].value
         }
-        axios.post("/auction/create", reqbody)
+        axios.post("/api/auction/create", reqbody)
         .then(() => {
             window.location.href = "/myauctions"
         })
@@ -83,46 +81,42 @@ export default {
 </script>
 
 <style lang="scss">
-  .auction-page {
-    height: 100%;
-    width: 100%;
-  }
+
   .create-auction-div {
-    padding: 8% 0 0;
     position: relative;
-    margin: auto; 
-    width: 300px;
-    min-width: 50px;
+    margin-top: 100px;
+    height: 100%;
+    width: $div_width;
     
   }
-  .auction-box {
-    background: #ffffff;
+  .create-auction-box {
+    background: $div_background;
     text-align: center;
-    max-width: 300px;
+    max-width: $div_width;
     padding: 40px;
     position: relative;
-    box-shadow: 0px 1px 5px black;
+    $box_shaddow: 0px 1px 5px black;
   }
 
-  .auction-box input  {
-    background: #f2f2f2;
+  .create-auction-box input  {
+    background: $input_background;
     width: 100%;
     border: 0;
     margin: 0 0 15px;
     padding: 15px;
-    box-sizing: border-box;
+    box-sizing: $box_size;
     font-size: 14px;
     
   }
 
-  .button {
-    background: #22bd7e;
+  .create-auction-button {
+    background: $button_color;
     height: 40px;
     width: 100px;
     border: 0;
     margin: 15px;
   }
-  .button:hover {
-    background: #1da16b;
+  .create-auction-button:hover {
+    background: $button_hover_color;
   }  
 </style>

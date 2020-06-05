@@ -1,6 +1,6 @@
 <template>
-<div class="login-div">
-      <div class="login-box" v-if="auction != null && !isLoading && auction.status =='NEW' && auction.creator == username">
+<div class="edit-auction-div">
+      <div class="edit-auction-box" v-if="auction != null && !isLoading && auction.status =='NEW' && auction.creator == username">
         <h1>Auction</h1>
         <input id="auction-name-input" ref="auction-name-input" class="input" type="text" :placeholder="auction.name">
         <span v-if="priceError">
@@ -18,8 +18,8 @@
         </div>
         <p v-text="'Creator: '+auction.creator"/>
         <div>
-          <button class="button" @click="cancel">Cancel</button>
-          <button class="button" @click="apply">Apply Changes</button>
+          <button class="edit-auction-button" @click="cancel">Cancel</button>
+          <button class="edit-auction-button" @click="apply">Apply Changes</button>
         </div>
       </div>
 </div>
@@ -51,18 +51,18 @@ export default {
   },
   beforeCreate() {
     this.isAuthenticating = true;
-    axios.get('/user-status')
+    axios.get('/api/user-status')
       .then((resp) => {
         this.isAuthenticated = resp.data["isAuthenticated"]
         this.username = resp.data["username"]
         this.isLoading =false;
 
       })
-        var json = {
+      var json = {
       "index": window.location.href.split('id:').slice(-1)[0].toString()
     }
     
-      axios.post('/auction/auction', json)
+      axios.post('/api/auction/auction', json)
       .then(resp => {
             this.auction = resp.data["auction"]
       })
@@ -78,7 +78,7 @@ export default {
     apply() {
         if(this.$refs['auction-name-input'].value.length != 0) { this.auction.name = this.$refs['auction-name-input'].value }
         
-        if(this.$refs['auction-price-input'].value < 0.1 && this.$refs['auction-price-input'].value.length > 0) { this.priceError = true }
+        if(this.$refs['auction-price-input'].value < 0.01 && this.$refs['auction-price-input'].value.length > 0) { this.priceError = true }
         else {
             this.priceError = false
             if(this.$refs['auction-price-input'].value.length != 0) { this.auction.price = this.$refs['auction-price-input'].value }
@@ -96,12 +96,11 @@ export default {
                 "type": this.auction.type
             }
             
-            axios.post("/auction/edit", reqbody)
+            axios.post("/api/auction/edit", reqbody)
             .then(() => {
             })
-            window.location.href = "/myauctions"
-
-
+            var path = "/auction/id:"+this.auction._id
+            window.location.href = path
         }
 
         
@@ -113,70 +112,42 @@ export default {
 </script>
 
 <style lang="scss">
-  .left-panel {
+
+  .edit-auction-div {
+    position: relative;
+    margin-top: 100px;
     height: 100%;
-    width: 100%;
-  }
-  .user-menu {
-    position: relative;
-    top: 10%;
-    left: 20%;
-    width: 250px;
-    background: #ffffff;
-    box-shadow: 0px 1px 5px black;
-
-
-  }
-  .login-div {
-    padding: 8% 0 0;
-    position: relative;
-    margin: auto; 
-    width: 300px;
-    min-width: 50px;
+    width: $div_width;
     
   }
-  .login-box {
-    background: #ffffff;
+  .edit-auction-box {
+    background: $div_background;
     text-align: center;
-    max-width: 300px;
+    max-width: $div_width;
     padding: 40px;
     position: relative;
-    box-shadow: 0px 1px 5px black;
+    box-shadow: $box_shaddow;
   }
 
-  .login-box input  {
-    background: #f2f2f2;
+  .edit-auction-box input  {
+    background: $input_background;
     width: 100%;
     border: 0;
     margin: 0 0 15px;
     padding: 15px;
-    box-sizing: border-box;
-    font-size: 14px;
+    box-sizing: $box_size;
+    font-size: $normal_font_size;
     
   }
 
-  .button {
-    background: #22bd7e;
+  .edit-auction-button {
+    background: $button_color;
     height: 40px;
     width: 100px;
-    border: 0;
-    margin: 15px;
+    border: $no_border;
+    margin: 10px;
   }
-  .button:hover {
-    background: #1da16b;
+  .edit-auction-button:hover {
+    background: $button_hover_color;
   } 
-
-  .menu-button {
-    background: #22bd7e;
-    height: 50px;
-    width: 130px;
-    border: 0;
-    margin: 60px;
-  }
-
-  .menu-button:hover {
-    background: #1da16b;
-  } 
-  
- 
 </style>
