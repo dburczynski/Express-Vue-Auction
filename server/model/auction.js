@@ -11,6 +11,10 @@ const auctionSchema = new Schema({
         enum: ['NEW','BID','SOLD','FAILED'],
         default: 'NEW'
     },
+    info: {
+        type: String,
+        default: ''
+    },
     type: {
         type: String,
         enum: ['BID','BUY'],
@@ -24,6 +28,9 @@ const auctionSchema = new Schema({
         type: Number,
         min: [0.01, "Not for free!"]
 
+    },
+    start_time: {
+        type: Number 
     },
     end_time: {
         type: Number

@@ -1,5 +1,5 @@
 <template>
-    <div class="my-auction-list" v-if="isAuthenticated && !isAuthenticating"> 
+    <div class="my-auction-list" v-if="!isLoading"> 
         <div v-for="auction in this.auctions" :key="auction._id">
             <div class="my-auction-break">               
             </div>
@@ -24,41 +24,67 @@
         </div>
     </div>
 </template>
+
 <script>
 import axios from '@/../node_modules/axios/dist/axios.min.js'
+import io from '@/../node_modules/socket.io-client'
 
 export default {
     name: 'MyAuctions',
 
     data () {
       return {
+        isAuthenticated: false,
+        username: null,
         auctions: [],
         auctionsLoaded: 0,
-        isAuthenticated: false,
-        isAuthenticating: true
+        socket: null,
       }
     
     },
 
-    beforeCreate() {
-      axios.get('/api/user-status')
-            .then((resp) => {
-                this.isAuthenticated = resp.data["isAuthenticated"]    
-                if(this.isAuthenticated == false) { window.location.href = "/" }  
-                this.isAuthenticating = false 
-                axios.post('/api/auction/myauctions', { "index": this.auctionsLoaded})
-                .then((resp) => {
-                    this.auctions = this.auctions.concat(resp.data)
-                    this.auctionsLoaded = this.auctions.length
-                })
-            });
+    created() {
         
+        this.authenticate()
+        this.getInitialData()
+        this.socketSetup()
     },
 
     methods: {
+        authenticate() {
+            this.isAuthenticated = this.$store.state.isAuthenticated
+            this.username = this.$store.state.username
+        },
+
+        getInitialData() {
+            if(!this.isAuthenticated) {
+                window.location.href = "/"
+            }
+        
+            axios.post('/api/auction/myauctions', { "index": this.auctionsLoaded})
+            .then((resp) => {
+                this.auctions = this.auctions.concat(resp.data)
+                this.auctionsLoaded = this.auctions.length
+                this.isLoading = false
+            })
+        },
+
+        socketSetup() {
+            if(this.isAuthenticated) {
+                this.socket = io()
+                this.socket.on("overbid", (auctionOver) => {
+                this.auctions.forEach((e) => {
+                    if(e._id == auctionOver._id)
+                        e.price = auctionOver.price
+                    })        
+                })
+            }
+        },
+
         navigateToAuction(auction) {
             window.location.href = "/auction/id:"+auction._id;
         },
+
         loadAuctions() {      
             axios.post('/api/auction/myauctions', { "index": this.auctionsLoaded})
             .then((resp) => {

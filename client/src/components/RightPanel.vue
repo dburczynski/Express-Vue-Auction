@@ -1,15 +1,20 @@
 <template>
   <div class="right-panel">
-    <div class="right-panel-div" v-if="this.isAuthenticated && !this.isAuthenticating">
+    <div class="right-panel-div" v-if="this.isAuthenticated">
       <div class="right-panel-box">
-        <p v-text="'Welcome '+this.username"></p>
-        <p v-text="'Auctions: '+this.auctions"></p>
-        <p v-text="'Bids: '+this.bids"></p>
+        <p v-text="'Welcome: '+this.username"></p>
+        <p v-text="'Auctions: '+this.auctionCount"></p>
+        <p v-text="'Bids: '+this.bidCount"></p>
         <button class="right-panel-button" @click="logout">Logout</button>
-        <button class="right-panel-button" @click="messenger">Messenger</button>
+        <div v-if="this.newMessages">
+          <button class="right-panel-button-new" @click="messenger">Messenger</button>
+        </div>
+        <div v-if="!this.newMessages">
+          <button class="right-panel-button" @click="messenger">Messenger</button>
+        </div>
       </div>
     </div>
-    <div class="right-panel-div" v-if="!isAuthenticated && !isAuthenticating">
+    <div class="right-panel-div" v-if="!this.isAuthenticated">
       <div class="right-panel-box">
         <span v-if="loginError">
           <p>Incorrect username or password</p>
@@ -24,7 +29,7 @@
         <input id="password-input" ref="password-input" class="input" type="password" placeholder="password" required="">
         <button class="right-panel-button" @click="login">Login</button>
          <div>
-        <a>Not a user?</a>
+        <a>Not a user? </a>
         <a href='/register'>Register</a>
         </div>
       </div>
@@ -34,51 +39,98 @@
 </template>
 <script>
 import axios from '@/../node_modules/axios/dist/axios.min.js'
+import store from '../store'
+import bus from '../bus'
+import io from '@/../node_modules/socket.io-client'
 
 export default {
     name: 'RightPanel',
   data () {
     return {
       isAuthenticated: false,
-      isAuthenticating: true,
+      username: null,
       usernameError: false,
       passwordError: false,
       loginError: false,
-      username: {
-          type: String,
-          default: ""
-      },
-      auctions: {
-          type: Number,
-          default: 0
-      },
-      bids: {
-          type: Number,
-          default: 0
-      }
-  }
+      auctionCount: 0,
+      bidCount: 0,
+      newMessages: false,
+      socket: null,
+    }
   },
-  beforeCreate() {
-    axios.get('/api/user-status')
-      .then((resp) => {
-        this.isAuthenticated = resp.data["isAuthenticated"]
-        this.username = resp.data["username"]
-        this.isAuthenticating = false
-      })
+  created() {
+    this.authenticate()
+    this.setupEventBus()
+    this.getInitialData()
+    this.socketSetup();
+  },
 
-     axios.get('/api/user-auction-data')
-        .then((resp) => {
-            this.auctions = resp.data["auctions"]
-            
-    })
-    axios.get('/api/user-bid-data')
-        .then((resp) => {
-            this.bids = resp.data["bids"]
-            
-    })
+  methods: {
+    authenticate() {
+      this.isAuthenticated = this.$store.state.isAuthenticated
+      this.username = this.$store.state.username
     },
-    methods: {
-      login () {
+    setupEventBus() {
+      bus.$on('authenticateChange', () => {
+        this.isAuthenticated = this.$store.state.isAuthenticated
+        this.username = this.$store.state.username
+      })
+      bus.$on('read-message', () => {
+        axios.get('/api/conversations/unread-messages')
+        .then((resp) => {
+          if(resp.data["newMessages"] == true) {
+            this.newMessages = true
+          }
+          else {
+            this.newMessages = false
+          }
+        })
+      })
+    },
+
+    getInitialData() {
+      if(this.isAuthenticated) {
+        axios.get('/api/user-auction-data')
+        .then((resp) => {
+          console.log(resp.data["auctions"])
+          this.auctionCount = resp.data["auctions"]
+        })
+        axios.get('/api/user-bid-data')
+        .then((resp) => {
+          this.bidCount = resp.data["bids"]    
+        })
+        axios.get('/api/conversations/unread-messages')
+        .then((resp) => {
+          if(resp.data["newMessages"] == true) {
+            this.newMessages = true
+            bus.$emit("read-message")
+          }
+          else {
+            this.newMessages = false
+          }
+        })
+       }
+    },
+
+    socketSetup() {
+      if(this.isAuthenticated) {
+        this.socket = io()
+        this.socket.on("new-message", () => {
+          axios.get('/api/conversations/unread-messages')
+          .then((resp) => {
+            if(resp.data["newMessages"] == true) {
+              this.newMessages = true
+              bus.$emit("read-message")
+            }
+            else {
+              this.newMessages = false
+            }
+          })
+        })
+      }
+    },
+    
+    login () {
       if(this.$refs["username-input"].value.length == 0) { this.usernameError = true }
       else { this.usernameError = false }
 
@@ -92,8 +144,25 @@ export default {
         }
         
         axios.post('/api/login', userCredentials)
-        .then(() => {
-        location.reload() 
+        .then((resp) => {
+          store.dispatch('authenticate')
+          store.dispatch('setUsername',  resp.data.username)
+          bus.$emit('authenticateChange', true)
+            
+          axios.get('/api/user-auction-data')
+          .then((resp) => {
+            this.auctionCount = resp.data["auctions"]
+          })
+          axios.get('/api/user-bid-data')
+          .then((resp) => {
+            this.bidCount = resp.data["bids"]    
+          })
+          axios.get('/api/conversations/unread-messages')
+          .then((resp) => {
+            if(resp.data["newMessages"] == true) {
+              this.newMessages = true
+            }
+          })
         })
         .catch(() => {
           this.loginError = true
@@ -103,9 +172,12 @@ export default {
 
     logout () {
       axios.get("/api/logout")
-          .then(() => {
-              window.location.href = "/"
-          })
+        .then(() => {
+          store.dispatch({type: 'unauthenticate'})
+          store.dispatch({type: 'removeUsername'})
+          bus.$emit('authenticateChange', false)
+          window.location.href = "/"
+        })
     },
 
     messenger() {
@@ -151,6 +223,13 @@ export default {
 
   .right-panel-button {
     background: $button_color;
+    height: 40px;
+    width: 100px;
+    border: 0;
+    margin: 5px 10px 15px;
+  }
+    .right-panel-button-new {
+    background: red;
     height: 40px;
     width: 100px;
     border: 0;

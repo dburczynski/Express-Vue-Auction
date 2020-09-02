@@ -14,7 +14,6 @@
                         <p>Bidders: {{auction.bidders.length}}</p>
                     </div>
                </div>
-               
             </div>
             <div class="auctions-break">
             </div>
@@ -27,24 +26,37 @@
 <script>
 import axios from '@/../node_modules/axios/dist/axios.min.js'
 
+
 export default {
     name: 'Auctions',
     data () {
       return {
+        isAuthenticated: false,
+        username: null,
         auctions: null,
         auctionsLoaded: 0,
+     
       }
     },
     created () {
-        axios.get('/api/auction/auctions', { "index": this.auctionsLoaded})
-        .then(resp => {
-            this.auctions = resp.data
-            this.auctionsLoaded = this.auctions.length
-        })
-        
+        this.authenticate()
+        this.getInitialData()
     },
 
     methods: {
+        authenticate() {
+            this.isAuthenticated = this.$store.state.isAuthenticated
+            this.username = this.$store.state.username
+        },
+
+        getInitialData() {
+            axios.post('/api/auction/auctions', { "index": this.auctionsLoaded})
+            .then(resp => {
+                this.auctions = resp.data
+                this.auctionsLoaded = this.auctions.length
+            })
+        },
+
         navigateToAuction(auction) {
             window.location.href = "/auction/id:"+auction._id;
         },

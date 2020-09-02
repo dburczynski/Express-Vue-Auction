@@ -1,13 +1,15 @@
 const mongoose = require("mongoose");
 (async () => {
     try {
-        await mongoose.connect('mongodb://vuejs:xdxd123@ds229918.mlab.com:29918/heroku_7jllzdhr', {
+        await mongoose.connect('mongodb://localhost:27017', {
             useUnifiedTopology: true,
             useNewUrlParser: true,
-            useCreateIndex: true
+            useCreateIndex: true,
+            useFindAndModify: false
         });
     } catch (err) {
         console.error(err);
+        // eslint-disable-next-line no-undef
         process.exit(1);
     }
 })();

@@ -21,11 +21,10 @@ import RightPanel from '@/components/RightPanel.vue'
 export default {
     name: 'Home',
     components: {
-        LeftPanel,
+       LeftPanel,
         Auctions,
         RightPanel
     }
-    
 }
 </script>
 

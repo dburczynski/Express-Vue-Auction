@@ -24,7 +24,6 @@ export default {
         MyAuctions,
         RightPanel
     }
-    
 }
 </script>
 

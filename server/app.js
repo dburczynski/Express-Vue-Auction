@@ -8,7 +8,6 @@ const socketio = require("socket.io");
 const passportSocketIo = require("passport.socketio");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser")
-const path = require("path")
 var history = require('connect-history-api-fallback');
 const Auction = require("./model/auction")
 const Message = require("./model/message")
@@ -16,9 +15,11 @@ const cors = require("cors")
 
 
 app.use(cors())
-//app.set("view engine", "ejs");
+// eslint-disable-next-line no-undef
 app.use("/public",express.static(__dirname + "/public"));
+// eslint-disable-next-line no-undef
 app.use("/js", express.static(__dirname + "/public/js"))
+// eslint-disable-next-line no-undef
 app.use("/css", express.static(__dirname + "/public/css"))
 
 app.use(history())
@@ -38,6 +39,7 @@ const MongoStore = require('connect-mongo')(expressSession);
 const sessionStore = new MongoStore({mongooseConnection: mongoose.connection});
 
 app.use(expressSession({
+    // eslint-disable-next-line no-undef
     secret: process.env.APP_SECRET,
     store: sessionStore,
     resave: false,
@@ -48,21 +50,27 @@ app.use(expressSession({
 const passport = require("./passport");
 app.use(passport.initialize());
 app.use(passport.session());
+
+const server = require("./https")(app);
+const io = socketio(server) 
+module.exports = io
+
 // routing aplikacji
 const routes = require("./routes");
 app.use("/api/",routes);
 const auction_routes = require("./routes/auction")
-app.use("/api/auction",auction_routes)
-const messenger_routes = require("./routes/conversations")
+app.use("/api/auction", auction_routes)
+//const auction_api_routes = require("./routes/auction-api")
+//app.use("/test/auction", passport.authenticate('jwt', {session: false}), auction_api_routes)
+const messenger_routes = require("./routes/conversations");
+const Conversation = require("./model/conversation");
 app.use("/api/conversations",messenger_routes)
 // wyłapujemy odwołania do nieobsługiwanych adresów
 
 
 
-//HANDLE production
 
-    // app.use(express.static(path.join(__dirname, "public")));
-
+// eslint-disable-next-line no-undef
  app.get('/*', (req,res) => res.sendFile(__dirname+"/public/index.html"));
 
 app.use((_, res) => {
@@ -72,11 +80,10 @@ app.use((_, res) => {
 
 // Serwer HTTPS
 // openssl req -x509 -nodes -days 365 -newkey rsa:1024 -out my.crt -keyout my.key
-const server = require("./https")(app);
+// eslint-disable-next-line no-undef
 const port = process.env.PORT;
 
 
-const io = socketio(server) 
 
 io.use(passportSocketIo.authorize({
     key: "connect.sid",
@@ -86,22 +93,33 @@ io.use(passportSocketIo.authorize({
     cookieParser: cookieParser
     }))
 
-io.on("connection", (socket) => {
-     console.log(`Made socket connection: ${socket.id}`);
 
-     socket.on("join-chat", (data) => {
+
+io.on("connection", (socket) => {
+    console.log(`Made socket connection: ${socket.id}`);
+    socket.join(socket.request.user.username)
+    
+    socket.on("join-chat", (data) => {
         if(socket.request.user && socket.request.user.logged_in) {
                console.log("Socket: "+socket.id+" is joining chat:"+data._id)
                socket.join("chat:"+data._id)
-           }
+        }
     })
     socket.on("send-message", (data) => {
         if(socket.request.user && socket.request.user.logged_in) {
 
             let newMessage = Message( { "from": data.from, "to":data.to, "text": data.text})
             newMessage.save()
+            var conversationUser = [ data.from, data.to ]
+
+            Conversation.findOne( { users: conversationUser.sort() }, (err, doc) => {
+                doc.unread = data.to
+                doc.save()
+            })
+
             console.log(socket.id+" is sending a message to "+data._id)
             io.sockets.in("chat:"+data._id).emit("receive-message", newMessage)
+            io.sockets.in(data.to).emit("new-message")
         }
      })
      socket.on("leave-chat", (data) => {
@@ -117,55 +135,66 @@ io.on("connection", (socket) => {
                 socket.join("auction:"+data._id)
             }
      })
-     socket.on("auction-start", (data) => {
-        if(socket.request.user && socket.request.user.logged_in) {
-           Auction.findOne( { _id: data._id}, (err, doc) => {
-            if(socket.request.user.username == doc.creator && doc.status == "NEW") {
-                doc.end_time = new Date(new Date().getTime()+(1 * 3 * 60 * 1000)).getTime();
-                doc.status = "BID"
-                doc.save()
-                setTimeout(() => {
-                    Auction.findOne( { _id : data._id}, (err,doc) => {
     
-                        if(doc.highest_bidder != null) {
-                            doc.status = "SOLD"
-                        }
-                        else {
-                            doc.status = "FAILED"
-                        }
-                        doc.save()
-    
-                        } 
-                    )},(1 * 3 * 60 * 1000))     
-            }  
-        })
-           console.log("New auction created!");
-        }
-     })
-     socket.on("leave-auction", (data) => {
+    socket.on("leave-auction", (data) => {
         if(socket.request.user && socket.request.user.logged_in) {
             console.log("Socket: "+socket.id+" is leaving auction:"+data._id)
             socket.leave("auction:"+data._id)
         }
-     })
+    })
     socket.on("auction-bid", (data) => {
         if(socket.request.user && socket.request.user.logged_in) {
-            Auction.findOne( { _id: data._id}, (err, doc) => {
-                if(doc.price < data.new_bid && doc.status == 'BID' && doc.type == 'BID') {
-                    console.log(doc.price+" "+data.new_bid)
-                    doc.highest_bidder = socket.request.user.username
-                    if(!doc.bidders.includes(socket.request.user.username)) {
-                        doc.bidders.push(socket.request.user.username)
+            Auction.findOne({ _id: data._id}, (err, doc) => {
+                if(doc.end_time > new Date(Date.now()).getTime()) {
+                    if(doc.price < data.new_bid && doc.status == 'BID' && doc.type == 'BID') {
+                        doc.highest_bidder = socket.request.user.username
+                        if(!doc.bidders.includes(socket.request.user.username)) {
+                            doc.bidders.push(socket.request.user.username)
+                        }
+                        doc.price = data.new_bid
+                        doc.save()
+                        for(let i = 0; i < doc.bidders.length; i++) {
+                            io.sockets.in(doc.bidders[i]).emit("overbid", doc)
+                        }
+                        io.sockets.in(doc.creator).emit("overbid", doc)
+                        io.sockets.in("auction:"+data._id).emit("new-bid")
                     }
-                    doc.price = data.new_bid
-                    doc.save()
                 }
-                io.sockets.in("auction:"+data._id).emit("new-bid")
+                else {
+                    if(doc.highest_bidder) {
+                        doc.status = "SOLD"
+                        io.sockets.in(doc.highest_bidder).emit("buy");
+                    }
+                    else 
+                        doc.status = "FAILED"
+                    doc.save()
+                    io.sockets.in("auction:"+doc._id).emit("leave");
+                }
             })    
         }
     })
+    socket.on("bought", (data) => {
+        Auction.findOne({ _id: data._id}, (err, doc) => {
+            if(doc.end_time > new Date(Date.now())) {
+                doc.highest_bidder = socket.request.user.username 
+                doc.bidders = [socket.request.user.username]
+                doc.status = "SOLD"
+                doc.save()
+                io.sockets.in(doc.highest_bidder).emit("buy");
+                io.sockets.in("auction:"+doc._id).emit("leave");
+                
+            }
+            else {
+                doc.status = "FAILED"
+                doc.save()
+                io.sockets.in("auction:"+doc._id).emit("leave");
+            }
+        })
+    })
 })
+
 
 server.listen(port, () => {
     console.log(`Serwer działa pod adresem: https://localhost:${port}`);
 })
+

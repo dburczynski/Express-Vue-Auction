@@ -5,8 +5,11 @@ const Schema = mongoose.Schema;
 const conversationSchema = new Schema({
     
     users: [{type: String}],
-    messages: [{type: Message.schema}]
-
+    messages: [{type: Message.schema}],
+    unread: {
+        type:String
+    }
+    
 });
 
 

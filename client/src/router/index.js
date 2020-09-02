@@ -34,12 +34,14 @@ const routes = [
     },
     {
         path: '/create-auction',
+
         name: 'CreateAuction',
         component: CreateAuctionView
 
     },
     {
         path: '/auction/id:(\\w+)',
+
         name: 'AuctionView',
         component: AuctionView
         
@@ -51,6 +53,7 @@ const routes = [
     },
     {
         path: '/messenger',
+
         name: 'MessengerView',
         component: MessengerView
     }

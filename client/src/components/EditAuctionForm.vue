@@ -3,6 +3,10 @@
       <div class="edit-auction-box" v-if="auction != null && !isLoading && auction.status =='NEW' && auction.creator == username">
         <h1>Auction</h1>
         <input id="auction-name-input" ref="auction-name-input" class="input" type="text" :placeholder="auction.name">
+        <span v-if="infoError">
+          <p>Please enter info with less than 51 characters / Cannot be empty</p>
+        </span>
+        <input id="auction-info-input" ref="auction-info-input" class="input" type="text" placeholder="info">
         <span v-if="priceError">
             <p>Please enter price bigger than 0.00</p>
         </span>
@@ -29,46 +33,45 @@ import axios from '@/../node_modules/axios/dist/axios.min.js'
 
 export default {
     name: 'EditAuctionForm.vue',
-    props: {
-      isLoading: {
-        type: Boolean,
-      }
-    },
+
   data () {
     return {
       isAuthenticated: false,
-      isAuthenticating: true,
-      priceError: false,    
-      username: {
-          type: String,
-          default: ""
-      },
+      username: null,
+      isLoading: true,
+      priceError: false,  
+      infoError: false,  
       auction: null,
     
     }
 
     
   },
-  beforeCreate() {
-    this.isAuthenticating = true;
-    axios.get('/api/user-status')
-      .then((resp) => {
-        this.isAuthenticated = resp.data["isAuthenticated"]
-        this.username = resp.data["username"]
-        this.isLoading =false;
-
-      })
-      var json = {
-      "index": window.location.href.split('id:').slice(-1)[0].toString()
-    }
-    
-      axios.post('/api/auction/auction', json)
-      .then(resp => {
-            this.auction = resp.data["auction"]
-      })
+  created() {
+   
+      this.authenticate()
+      this.getInitialData()
   },
   
   methods: {
+    authenticate() {
+      this.isAuthenticated = this.$store.state.isAuthenticated
+      this.username = this.$store.state.username
+    },
+
+    getInitialData() {
+      if(!this.isAuthenticated) {
+        window.location.href = "/"
+      }
+      let json = {
+        "index": window.location.href.split('id:').slice(-1)[0].toString()
+      }
+      axios.post('/api/auction/auction', json)
+      .then(resp => {
+        this.auction = resp.data["auction"]
+        this.isLoading = false
+      })
+    },
 
     cancel() {
       var path = "/auction/id:"+this.auction._id
@@ -78,7 +81,13 @@ export default {
     apply() {
         if(this.$refs['auction-name-input'].value.length != 0) { this.auction.name = this.$refs['auction-name-input'].value }
         
-        if(this.$refs['auction-price-input'].value < 0.01 && this.$refs['auction-price-input'].value.length > 0) { this.priceError = true }
+        if(this.$refs['auction-info-input'].value.length > 50 || this.$refs['auction-info-input'].value.trim() === "") { this.infoError = true }
+        else {
+          this.infoError = false 
+          if(this.$refs['auction-info-input'].value.length > 0) { this.auction.info = this.$refs['auction-info-input'].value }
+        }
+
+        if((this.$refs['auction-price-input'].value < 0.01 || this.$refs['auction-price-input'].value > 100000.00)  && this.$refs['auction-price-input'].value.length > 0 ) { this.priceError = true }
         else {
             this.priceError = false
             if(this.$refs['auction-price-input'].value.length != 0) { this.auction.price = this.$refs['auction-price-input'].value }
@@ -88,19 +97,20 @@ export default {
             this.auction.type = this.$refs["auction-type-select"].options[this.$refs["auction-type-select"].selectedIndex].value
          }
         
-        if(!this.priceError) {
+        if(!this.priceError && !this.infoError) {
             var reqbody = {
                 "_id": this.auction._id,
                 "name": this.auction.name,
-                "price": this.auction.price,
+                "info": this.auction.info,
+                "price": parseFloat(this.auction.price).toFixed(2),
                 "type": this.auction.type
             }
             
-            axios.post("/api/auction/edit", reqbody)
-            .then(() => {
-            })
-            var path = "/auction/id:"+this.auction._id
-            window.location.href = path
+          axios.post("/api/auction/edit", reqbody)
+          .then(() => {})
+          
+          var path = "/auction/id:"+this.auction._id
+          window.location.href = path
         }
 
         

@@ -1,5 +1,5 @@
 <template>
-    <div class="register-div" v-if="!isAuthenticated && !isAuthenticating">
+    <div class="register-div" v-if="!isAuthenticated">
       <div class="register-box">
         <h1>Register</h1>
         <span v-if="loginError">
@@ -23,31 +23,36 @@
 </template>
 <script>
 import axios from '@/../node_modules/axios/dist/axios.min.js'
-
 export default {
-    name: 'Login',
+  name: 'Login',
   data() {
     return {
       isAuthenticated: false,
-      isAuthenticating: true,
       usernameError: false,
       passwordError: false,
       loginError: false,
     }
   },
-  beforeCreate() {
-    axios.get("/api/user-status")
-    .then((resp) => {
-      this.isAuthenticated = resp["isAuthenticated"]
-      this.isAuthenticating = false
-    })
+  created() {
+    this.authenticate()
+    if(this.isAuthenticated) {
+      window.location.href = "/"
+    }
   },
   methods: {
+
+    authenticate() {
+      this.isAuthenticated = this.$store.state.isAuthenticated
+    },
+
     register() {
-      var json = {
+      this.loginError = false
+      
+      let json = {
         "username": this.$refs["username-input"].value,
         "password": this.$refs["password-input"].value
       }
+
       if(this.$refs["username-input"].value.length == 0) { this.usernameError = true}
       else { this.usernameError = false}
       if(this.$refs["password-input"].value.length == 0) { this.passwordError = true}

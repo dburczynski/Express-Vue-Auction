@@ -10,7 +10,6 @@
 </template>
 
 
-
 <style lang="scss">
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -25,7 +24,9 @@
   left: 0;
   width: 100%;
   height: 50px;
+  line-height: 50px;
   margin: 0px, 0px, 100px,
+  
     
 }
 .routerlinks {

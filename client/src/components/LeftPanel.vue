@@ -1,15 +1,23 @@
 <template>
   <div class="left-panel">
-    <div class="user-menu" v-if="isAuthenticated && !isAuthenticating">
+    <div class="user-menu" v-if="isAuthenticated">
       <button class="menu-button" @click="navigateToAllAuctions">All auctions</button>
       <button class="menu-button" @click="navigateToMyAuction">My auctions</button>
-      <button class="menu-button" @click="navigateToMyHistory">My History</button>
+      <div v-if="wins">
+        <button class="menu-button-red" @click="navigateToMyHistory">My History</button>
+      </div>
+      <div v-else>
+        <button class="menu-button" @click="navigateToMyHistory">My History</button>
+      </div>
       <button class="menu-button" @click="navigateToCreateAuction">Create Auction</button>
     </div>
   </div>
 </template>
 <script>
-import axios from '@/../node_modules/axios/dist/axios.min.js'
+
+import bus  from '../bus'
+import io from '@/../node_modules/socket.io-client'
+import store from '../store'
 
 export default {
   name: 'LeftPanel',
@@ -17,60 +25,57 @@ export default {
   data () {
     return {
       isAuthenticated: false,
-      isAuthenticating: true,
-      usernameError: false,
-      passwordError: false,
-      loginError: false
+      username: null,
+      socket: null,
+      newHistory: false,
+      wins: false
     }
   },
-
-  beforeCreate() {
-    axios.get('/api/user-status')
-      .then((resp) => {
-        this.isAuthenticated = resp.data["isAuthenticated"]
-        this.isAuthenticating = false;
-      })
+  created() {
+    this.authenticate()
+    this.setupEventBus()
+    this.socketSetup()
   },
-  
+
   methods: {
-    login () {
-      if(this.$refs["username-input"].value.length == 0) { this.usernameError = true }
-      else { this.usernameError = false }
-
-      if(this.$refs["username-input"].value.length == 0) { this.passwordError = true }
-      else { this. passwordError = false }
-
-      if(!this.usernameError || ! this.passwordError) {
-        var userCredentials = {
-        "username": this.$refs["username-input"].value,
-        "password": this.$refs["password-input"].value
-        }
-        axios.post('/api/login', userCredentials)
-        .then(() => {
-          location.reload()
-        })
-        this.loginError = true
-      }
-      
+    authenticate() {
+      this.isAuthenticated = this.$store.state.isAuthenticated
+      this.username = this.$store.state.username
+      this.wins = this.$store.state.wins
     },
-    logout () {
-      axios.get("/api/logout")
-          .then(() => {
-              window.location.href = "/"
-          })
+    setupEventBus() {
+      bus.$on('authenticateChange', () => {
+          this.isAuthenticated = this.$store.state.isAuthenticated
+      })
+      bus.$on("wins", () => {
+        this.wins = this.$store.state.wins
+      })
+    },
+    socketSetup() {
+      this.socket = io()
+      if(this.isAuthenticated) {
+        this.socket.on("buy", () => {
+          store.dispatch('setWins')
+          bus.$emit("wins")
+        })
+      }
     },
     navigateToAllAuctions() {
       window.location.href = "/"
     },
     navigateToMyAuction() {
-        window.location.href = "/myauctions"
+      window.location.href = "/myauctions"
+        
     },
     navigateToMyHistory() {
+      store.dispatch('removeWins')
+      bus.$emit("wins")
       window.location.href = "/myhistory"
     },
     navigateToCreateAuction() {
       window.location.href = "/create-auction"
     }
+    
   }
 }
 </script>
@@ -103,5 +108,18 @@ export default {
   }
   .menu-button:hover {
     background: $button_hover_color;
+  } 
+  .menu-button-red {
+    background: red;
+    height: 50px;
+    width: 120px;
+    border: 0;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    margin-left: 65px;
+    margin-right: 65px;
+  }
+  .menu-button-red:hover {
+    background: pink;
   } 
 </style>

@@ -1,5 +1,5 @@
 <template>
-    <div class="my-history-list" id="auction-list" ref="auction-list"  v-if="isAuthenticated && !isAuthenticating">
+    <div class="my-history-list" id="auction-list" ref="auction-list"  v-if="!isLoading">
         <div v-for="auction in auctions" :key="auction._id">
             <div class="my-history-break">               
             </div>
@@ -21,47 +21,49 @@
         </div>
          <div class="my-history-load-div">
                 <button  v-if="this.auctionsLoaded != 0 && this.auctionsLoaded % 10 === 0" class="my-history-load-button" @click="loadAuctions">Load Auctions</button> 
-            </div>
-
+        </div>
     </div>
 </template>
+
 <script>
 import axios from '@/../node_modules/axios/dist/axios.min.js'
 
 export default {
     name: 'MyHistory',
-    props: {
-        username: {
-            type: String,
-            default: ""
-        },
-    },
+
     data () {
         return {
             isAuthenticated: false,
-            isAuthenticating: true,
+            username: null,
+            isLoading: true,
             auctions: [],
             auctionsLoaded: 0
         }
     },
-    beforeCreate() {
-        axios.get('/api/user-status')
-        .then((resp) => {
-            this.isAuthenticated = resp.data["isAuthenticated"]    
-            this.username = resp.data["username"]
-            this.isAuthenticating = false
-
-            if(this.isAuthenticated == false) { window.location.href = "/" }   
-            else {
-                axios.post('/api/auction/myhistory', { "index": this.auctionsLoaded})
-                .then((resp) => {
-                    this.auctions = resp.data
-                    this.auctionsLoaded = this.auctions.length
-                })  
-            }
-        });
+    created() {
+       this.authenticate()
+       this.getInitialDate()
     },  
     methods: {
+        authenticate() {
+            this.isAuthenticated = this.$store.state.isAuthenticated
+            this.username = this.$store.state.username
+        },
+
+        getInitialDate() {
+            if(!this.isAuthenticated) { 
+                window.location.href = "/" 
+            }   
+            else {
+            axios.post('/api/auction/myhistory', { "index": this.auctionsLoaded})
+            .then((resp) => {
+                this.auctions = resp.data
+                this.auctionsLoaded = this.auctions.length
+                this.isLoading = false
+            })  
+            }
+        },
+
         navigateToAuction(auction) {
             window.location.href = "/auction/id:"+auction._id;
         },
